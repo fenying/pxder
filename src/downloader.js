@@ -192,6 +192,7 @@ function downloadIllusts(illusts, dldir, totalThread) {
 
 				//开始下载
 				console.log(`  [${threadID}]\t${(parseInt(i) + 1).toString().green}/${illusts.length}\t ${"pid".gray} ${illust.id.toString().cyan}\t${illust.title.yellow}`);
+
 				await (async function tryDownload(times) {
 					if (times > 10) {
 						if (errorThread > 1) {
@@ -214,7 +215,20 @@ function downloadIllusts(illusts, dldir, totalThread) {
 						let dlFile = Path.join(tempDir, illust.file);
 						for (let i = 0; i < 15 && !Fs.existsSync(dlFile); i++) await sleep(200); //不明bug
 						let dlFileSize = Fs.statSync(dlFile).size;
-						if (dlFileSize == fileSize) Fse.moveSync(dlFile, Path.join(dldir, illust.file));
+						if (dlFileSize == fileSize) {
+
+							Fse.moveSync(dlFile, Path.join(dldir, illust.file));
+							
+							if (!Fs.existsSync(`${dldir}/${illust.id}.json`)) {
+
+								Fs.writeFileSync(`${dldir}/${illust.id}.json`, JSON.stringify({
+									"id": illust.id,
+									"title": illust.title,
+									"tags": illust.rawData.tags.map((x) => x.name),
+									"date": illust.rawData.create_date
+								}, null, 2))
+							}
+						}
 						else {
 							Fs.unlinkSync(dlFile);
 							throw new Error('Incomplete download');
